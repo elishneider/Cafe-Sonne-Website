@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Café Sonne — Find sunny outdoor seating in London</title>
+<meta name="description" content="Café Sonne shows you which London cafés have outdoor seating that's actually in the sun, right now.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>☀️</text></svg>">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header class="site-header">
+  <div class="container header-inner">
+    <a href="#" class="logo">
+      <span class="logo-mark">☀️</span>
+      <span>Café Sonne</span>
+    </a>
+    <nav class="nav-links" id="navLinks">
+      <a href="#how-it-works">How it works</a>
+      <a href="#preview">Cafés</a>
+      <a href="#faq">FAQ</a>
+    </nav>
+    <a href="#waitlist" class="btn btn-primary btn-small">Get early access</a>
+    <button class="nav-toggle" id="navToggle" aria-label="Toggle menu" aria-expanded="false">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+</header>
+
+<main>
+
+  <section class="hero">
+    <div class="container hero-inner">
+      <div class="hero-copy">
+        <p class="eyebrow">Sunny outdoor seating, mapped in real time</p>
+        <h1>Find the London cafés catching the sun <em>right now.</em></h1>
+        <p class="hero-sub">
+          Café Sonne tracks the sun's position through the day and matches it against outdoor seating layouts,
+          so you always know which nearby cafés have a table that's actually in the sun — not just outside.
+        </p>
+        <form class="waitlist-form" id="waitlistForm">
+          <input type="email" name="email" placeholder="you@email.com" required aria-label="Email address">
+          <button type="submit" class="btn btn-primary">Join the waitlist</button>
+        </form>
+        <p class="form-note" id="formNote">Free to join. We'll email you when Café Sonne launches in London.</p>
+        <div class="hero-trust">
+          <span>☕ Real cafés</span>
+          <span>☀️ Live sun tracking</span>
+          <span>📍 Sorted by distance</span>
+        </div>
+      </div>
+
+      <div class="hero-visual" aria-hidden="true">
+        <div class="phone-mock">
+          <div class="phone-notch"></div>
+          <div class="phone-screen">
+            <div class="phone-topbar">
+              <span class="phone-time">Now near you</span>
+              <span class="sun-chip"><span class="sun-dot"></span>Sunny · 4:12pm</span>
+            </div>
+            <div class="mini-card mini-card--sun">
+              <div class="mini-card-top">
+                <span class="mini-card-name">Fig &amp; Ash</span>
+                <span class="badge badge-sun">☀️ In the sun</span>
+              </div>
+              <div class="mini-card-meta">3 min walk · Outdoor tables free</div>
+              <div class="sun-bar"><span style="width:88%"></span></div>
+            </div>
+            <div class="mini-card">
+              <div class="mini-card-top">
+                <span class="mini-card-name">The Roasted Leaf</span>
+                <span class="badge badge-sun">☀️ In the sun</span>
+              </div>
+              <div class="mini-card-meta">6 min walk · Terrace seating</div>
+              <div class="sun-bar"><span style="width:64%"></span></div>
+            </div>
+            <div class="mini-card mini-card--shade">
+              <div class="mini-card-top">
+                <span class="mini-card-name">Corner &amp; Vine</span>
+                <span class="badge badge-shade">🌥️ In shade</span>
+              </div>
+              <div class="mini-card-meta">2 min walk · Outdoor tables free</div>
+              <div class="sun-bar"><span style="width:12%"></span></div>
+            </div>
+          </div>
+        </div>
+        <div class="sun-glow"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="pain">
+    <div class="container">
+      <h2>Sound familiar?</h2>
+      <div class="pain-grid">
+        <div class="pain-card">
+          <div class="pain-icon">🧭</div>
+          <h3>You walk past three cafés</h3>
+          <p>...before finding one with an outdoor table that isn't sitting in a building's shadow.</p>
+        </div>
+        <div class="pain-card">
+          <div class="pain-icon">🕑</div>
+          <h3>The sun keeps moving</h3>
+          <p>That sunny terrace at 12pm is fully shaded by 3pm. Maps don't know that. We do.</p>
+        </div>
+        <div class="pain-card">
+          <div class="pain-icon">📵</div>
+          <h3>Google Maps won't tell you</h3>
+          <p>"Outdoor seating: yes" doesn't mean sunny. It just means there are chairs outside.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="how" id="how-it-works">
+    <div class="container">
+      <p class="eyebrow center">How it works</p>
+      <h2 class="center">Three steps to your next sunny coffee</h2>
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">01</div>
+          <h3>Share your location</h3>
+          <p>We look at London cafés within walking distance of wherever you are.</p>
+        </div>
+        <div class="step">
+          <div class="step-num">02</div>
+          <h3>We check the sun, live</h3>
+          <p>Using the sun's real-time position and each café's outdoor layout, we work out which tables are actually lit.</p>
+        </div>
+        <div class="step">
+          <div class="step-num">03</div>
+          <h3>See what's sunny, nearby</h3>
+          <p>Get a ranked list of cafés with sunny outdoor seating right now — updated as the sun moves.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="preview" id="preview">
+    <div class="container">
+      <p class="eyebrow center">Right now, near Shoreditch</p>
+      <h2 class="center">A preview of what you'll see</h2>
+      <p class="section-sub center">Sample data — this is what Café Sonne will show once we launch.</p>
+
+      <div class="card-grid">
+        <article class="cafe-card">
+          <div class="cafe-card-photo photo-1"></div>
+          <div class="cafe-card-body">
+            <div class="cafe-card-head">
+              <h3>Fig &amp; Ash</h3>
+              <span class="badge badge-sun">☀️ In the sun</span>
+            </div>
+            <p class="cafe-card-meta">0.2 mi · Outdoor tables free · Closes 6pm</p>
+            <div class="sun-bar"><span style="width:88%"></span></div>
+            <p class="sun-label">Sunny for ~2h 40m more</p>
+          </div>
+        </article>
+
+        <article class="cafe-card">
+          <div class="cafe-card-photo photo-2"></div>
+          <div class="cafe-card-body">
+            <div class="cafe-card-head">
+              <h3>The Roasted Leaf</h3>
+              <span class="badge badge-sun">☀️ In the sun</span>
+            </div>
+            <p class="cafe-card-meta">0.4 mi · Terrace seating · Closes 5:30pm</p>
+            <div class="sun-bar"><span style="width:64%"></span></div>
+            <p class="sun-label">Sunny for ~1h 15m more</p>
+          </div>
+        </article>
+
+        <article class="cafe-card">
+          <div class="cafe-card-photo photo-3"></div>
+          <div class="cafe-card-body">
+            <div class="cafe-card-head">
+              <h3>Corner &amp; Vine</h3>
+              <span class="badge badge-shade">🌥️ In shade</span>
+            </div>
+            <p class="cafe-card-meta">0.1 mi · Outdoor tables free · Closes 7pm</p>
+            <div class="sun-bar"><span style="width:12%"></span></div>
+            <p class="sun-label">Back in the sun ~9:30am tomorrow</p>
+          </div>
+        </article>
+
+        <article class="cafe-card">
+          <div class="cafe-card-photo photo-4"></div>
+          <div class="cafe-card-body">
+            <div class="cafe-card-head">
+              <h3>Marlowe's</h3>
+              <span class="badge badge-partial">⛅ Partial sun</span>
+            </div>
+            <p class="cafe-card-meta">0.6 mi · Pavement tables · Closes 6pm</p>
+            <div class="sun-bar"><span style="width:45%"></span></div>
+            <p class="sun-label">Half the terrace is lit</p>
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="faq" id="faq">
+    <div class="container">
+      <p class="eyebrow center">FAQ</p>
+      <h2 class="center">Good questions</h2>
+      <div class="faq-list">
+        <details>
+          <summary>How do you know if a table is actually in the sun?</summary>
+          <p>We combine each café's outdoor seating layout with real-time sun position and nearby building/tree shadow data for that spot in London, so we can tell whether a table is lit or shaded at any given moment.</p>
+        </details>
+        <details>
+          <summary>Is this only for London?</summary>
+          <p>We're starting with London. If there's demand, other cities are on the roadmap.</p>
+        </details>
+        <details>
+          <summary>Will it cost anything?</summary>
+          <p>Café Sonne will be free to use when it launches. Joining the waitlist is free too.</p>
+        </details>
+        <details>
+          <summary>When does it launch?</summary>
+          <p>We're building it right now. Join the waitlist and we'll email you the moment it's ready.</p>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <section class="cta" id="waitlist">
+    <div class="container cta-inner">
+      <p class="eyebrow center">Be first to know</p>
+      <h2 class="center">Never sit in the shade again.</h2>
+      <p class="section-sub center">Join the waitlist and we'll let you know the moment Café Sonne launches in London.</p>
+      <form class="waitlist-form waitlist-form--cta" id="waitlistFormCta">
+        <input type="email" name="email" placeholder="you@email.com" required aria-label="Email address">
+        <button type="submit" class="btn btn-primary">Join the waitlist</button>
+      </form>
+      <p class="form-note center" id="formNoteCta">No spam. Just one email when we launch.</p>
+    </div>
+  </section>
+
+</main>
+
+<footer class="site-footer">
+  <div class="container footer-inner">
+    <div class="logo">
+      <span class="logo-mark">☀️</span>
+      <span>Café Sonne</span>
+    </div>
+    <p>&copy; 2026 Café Sonne. Made for coffee-lovers who chase the light, in London.</p>
+  </div>
+</footer>
+
+<script src="script.js"></script>
+</body>
+</html>
