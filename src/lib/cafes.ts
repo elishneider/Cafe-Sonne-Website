@@ -13,8 +13,11 @@ export type Cafe = {
   longitude: number;
   outdoorSeating: boolean;
   seatingNotes: string;
+  // Weekday hours (Mon–Fri) — a simplification; weekend hours can differ slightly.
+  opens: string;
   closes: string;
   exposure: Exposure;
+  placeId: string;
 };
 
 const CAFES: Cafe[] = [
@@ -25,8 +28,10 @@ const CAFES: Cafe[] = [
     longitude: -0.1761794,
     outdoorSeating: true,
     seatingNotes: "Pavement tables on Aberdeen Place",
-    closes: "17:00",
+    opens: "08:00",
+    closes: "16:00",
     exposure: { type: "directional", facingDeg: 340, obstructionDeg: 18 },
+    placeId: "ChIJbW7WArAadkgRTfIHUT9TifE",
   },
   {
     id: "gails-clifton-road",
@@ -35,8 +40,10 @@ const CAFES: Cafe[] = [
     longitude: -0.1795886,
     outdoorSeating: true,
     seatingNotes: "Forecourt tables on an open corner junction",
+    opens: "06:30",
     closes: "18:30",
     exposure: { type: "directional", facingDeg: 160, obstructionDeg: 12 },
+    placeId: "ChIJ3TgUwdIbdkgRqk9QCHtBuuc",
   },
   {
     id: "white-mulberries",
@@ -45,8 +52,10 @@ const CAFES: Cafe[] = [
     longitude: -0.1530008,
     outdoorSeating: true,
     seatingNotes: "Enclosed courtyard behind Paddington Street",
-    closes: "17:00",
+    opens: "07:00",
+    closes: "18:00",
     exposure: { type: "enclosed", minSunAltitudeDeg: 55 },
+    placeId: "ChIJWZAsUgkbdkgRho3VniGxdBQ",
   },
 ];
 

@@ -9,7 +9,7 @@ function angleDiff(a: number, b: number) {
   return diff > 180 ? 360 - diff : diff;
 }
 
-function getGeometrySunStatus(cafe: Cafe, sun: SunPosition): SunStatus {
+export function getGeometrySunStatus(cafe: Cafe, sun: SunPosition): SunStatus {
   const { exposure } = cafe;
 
   if (exposure.type === "enclosed") {
