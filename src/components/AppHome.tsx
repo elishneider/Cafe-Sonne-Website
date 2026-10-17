@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import type { Cafe } from "@/lib/cafes";
-import type { Weather } from "@/lib/weather";
+import type { HourlyWeather } from "@/lib/googleWeather";
 import { getCafeSunSummary, type CafeSunSummary } from "@/lib/cafeSunSummary";
 import type { DisplayStatus } from "@/lib/sunTimeline";
 import { CafeCard } from "@/components/CafeCard";
@@ -35,7 +35,7 @@ function useCoords() {
 
 export function AppHome() {
   const coords = useCoords();
-  const [weather, setWeather] = useState<Weather | null>(null);
+  const [forecast, setForecast] = useState<HourlyWeather[] | null>(null);
   const [cafes, setCafes] = useState<Cafe[] | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -50,20 +50,26 @@ export function AppHome() {
       fetch("/api/cafes").then((res) => res.json()),
     ])
       .then(([weatherData, cafesData]) => {
-        setWeather(weatherData);
+        const hourly: HourlyWeather[] = weatherData.forecast.map(
+          (h: { time: string; cloudCoverPct: number; isRaining: boolean }) => ({
+            ...h,
+            time: new Date(h.time),
+          }),
+        );
+        setForecast(hourly);
         setCafes(cafesData.cafes);
       })
       .catch(() => setError("Couldn't reach the API routes."));
   }, [coords]);
 
   const summaries: CafeSunSummary[] =
-    weather && cafes
+    forecast && cafes
       ? cafes
-          .map((cafe) => getCafeSunSummary(cafe, weather, new Date()))
+          .map((cafe) => getCafeSunSummary(cafe, forecast, new Date()))
           .sort((a, b) => STATUS_ORDER[a.status] - STATUS_ORDER[b.status])
       : [];
   const anySunnyNow = summaries.some((s) => s.status === "sun" || s.status === "partial");
-  const loaded = Boolean(weather && cafes);
+  const loaded = Boolean(forecast && cafes);
 
   return (
     <main className="container app-main">

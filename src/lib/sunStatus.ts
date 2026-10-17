@@ -1,8 +1,10 @@
 import type { SunPosition } from "./sun";
 import type { Cafe } from "./cafes";
-import type { Weather } from "./weather";
 
 export type SunStatus = "sun" | "partial" | "shade";
+
+// Provider-agnostic — just the two fields the sun/shade calculation actually needs.
+export type WeatherSnapshot = { cloudCoverPct: number; isRaining: boolean };
 
 function angleDiff(a: number, b: number) {
   const diff = Math.abs(a - b) % 360;
@@ -27,7 +29,7 @@ export function getGeometrySunStatus(cafe: Cafe, sun: SunPosition): SunStatus {
   return "sun";
 }
 
-export function getCafeSunStatus(cafe: Cafe, sun: SunPosition, weather: Weather): SunStatus {
+export function getCafeSunStatus(cafe: Cafe, sun: SunPosition, weather: WeatherSnapshot): SunStatus {
   if (!sun.isDaytime) return "shade";
 
   // Rain or a fully overcast sky means no direct sun anywhere, regardless of geometry.

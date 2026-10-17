@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getWeather } from "@/lib/weather";
+import { getHourlyForecast } from "@/lib/googleWeather";
 
 const DEFAULT_LATITUDE = 51.5265;
 const DEFAULT_LONGITUDE = -0.0789;
@@ -13,6 +13,6 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "lat and lon must be numbers" }, { status: 400 });
   }
 
-  const weather = await getWeather(latitude, longitude);
-  return NextResponse.json(weather);
+  const forecast = await getHourlyForecast(latitude, longitude);
+  return NextResponse.json({ forecast });
 }

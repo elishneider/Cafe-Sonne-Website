@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getCafes } from "@/lib/cafes";
-import { getPlacePhoto } from "@/lib/googlePlaces";
+import { getCafePhotoMedia } from "@/lib/cafePhotos";
 
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 
@@ -17,13 +16,7 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
     });
   }
 
-  const cafes = await getCafes();
-  const cafe = cafes.find((c) => c.id === cafeId);
-  if (!cafe) {
-    return NextResponse.json({ error: "Not found" }, { status: 404 });
-  }
-
-  const photo = await getPlacePhoto(cafe.placeId);
+  const photo = await getCafePhotoMedia(cafeId, 0);
   if (!photo) {
     return NextResponse.json({ error: "No photo available" }, { status: 404 });
   }
