@@ -1,4 +1,5 @@
 import { SiteHeader } from "@/components/SiteHeader";
+import { SiteFooter } from "@/components/SiteFooter";
 import { AppHome } from "@/components/AppHome";
 
 export default function Home() {
@@ -6,16 +7,7 @@ export default function Home() {
     <>
       <SiteHeader />
       <AppHome />
-
-      <footer className="site-footer">
-        <div className="container footer-inner">
-          <div className="logo">
-            <span className="logo-mark">☀️</span>
-            <span>Café Sonne</span>
-          </div>
-          <p>&copy; 2026 Café Sonne. Made for coffee-lovers who chase the light, in London.</p>
-        </div>
-      </footer>
+      <SiteFooter />
     </>
   );
 }

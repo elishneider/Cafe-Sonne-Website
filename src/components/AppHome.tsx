@@ -1,104 +1,48 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import type { Cafe } from "@/lib/cafes";
-import type { HourlyWeather } from "@/lib/googleWeather";
-import { getCafeSunSummary, type CafeSunSummary } from "@/lib/cafeSunSummary";
-import type { DisplayStatus } from "@/lib/sunTimeline";
 import { CafeCard } from "@/components/CafeCard";
+import { HeroSuns } from "@/components/HeroSuns";
 import { CafeMapSection } from "@/components/CafeMapSection";
-
-const STATUS_ORDER: Record<DisplayStatus, number> = { sun: 0, partial: 1, shade: 2, closed: 3 };
-
-const DEFAULT_COORDS = { latitude: 51.5265, longitude: -0.0789 };
-
-function useCoords() {
-  const [coords, setCoords] = useState(DEFAULT_COORDS);
-
-  useEffect(() => {
-    if (!navigator.geolocation) return;
-
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        setCoords({
-          latitude: position.coords.latitude,
-          longitude: position.coords.longitude,
-        });
-      },
-      () => {},
-      { timeout: 5000 },
-    );
-  }, []);
-
-  return coords;
-}
+import { useCafeSummaries } from "@/components/useCafeSummaries";
 
 export function AppHome() {
-  const coords = useCoords();
-  const [forecast, setForecast] = useState<HourlyWeather[] | null>(null);
-  const [cafes, setCafes] = useState<Cafe[] | null>(null);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    const params = new URLSearchParams({
-      lat: String(coords.latitude),
-      lon: String(coords.longitude),
-    });
-
-    Promise.all([
-      fetch(`/api/weather?${params}`).then((res) => res.json()),
-      fetch("/api/cafes").then((res) => res.json()),
-    ])
-      .then(([weatherData, cafesData]) => {
-        const hourly: HourlyWeather[] = weatherData.forecast.map(
-          (h: { time: string; cloudCoverPct: number; isRaining: boolean }) => ({
-            ...h,
-            time: new Date(h.time),
-          }),
-        );
-        setForecast(hourly);
-        setCafes(cafesData.cafes);
-      })
-      .catch(() => setError("Couldn't reach the API routes."));
-  }, [coords]);
-
-  const summaries: CafeSunSummary[] =
-    forecast && cafes
-      ? cafes
-          .map((cafe) => getCafeSunSummary(cafe, forecast, new Date()))
-          .sort((a, b) => STATUS_ORDER[a.status] - STATUS_ORDER[b.status])
-      : [];
-  const anySunnyNow = summaries.some((s) => s.status === "sun" || s.status === "partial");
-  const loaded = Boolean(forecast && cafes);
+  const { summaries, loaded, error } = useCafeSummaries();
 
   return (
     <main className="container app-main">
       {error && <p className="form-note">{error}</p>}
 
+      <section className="hero">
+        <HeroSuns />
+        <h1>
+          Find London cafés that have outdoor seating and are catching the sun
+        </h1>
+        <p className="hero-sub">
+          We find London cafés with outdoor seating and work out when their tables are in the sun, using the
+          sun&apos;s position, each café&apos;s surroundings and the weather forecast
+        </p>
+      </section>
+
       <section className="sunny-now-section">
-        <p className="eyebrow">Right now</p>
-        <h2>Cafés catching the sun</h2>
+        <p className="eyebrow">Near you</p>
+        <h2>Cafés near you that have outdoor seating</h2>
+        <p className="section-sub">
+          Check out which cafés with outdoor seating near you are catching the sun right now
+        </p>
         {!loaded ? (
           <p className="section-sub">Loading…</p>
         ) : (
-          <>
-            {!anySunnyNow && (
-              <p className="section-sub">
-                No cafés are catching the sun right now — here&apos;s when they&apos;ll next be sunny.
-              </p>
-            )}
-            <div className="card-grid">
-              {summaries.map((summary) => (
-                <CafeCard key={summary.cafe.id} summary={summary} />
-              ))}
-            </div>
-          </>
+          <div className="card-grid">
+            {summaries.map((summary) => (
+              <CafeCard key={summary.cafe.id} summary={summary} />
+            ))}
+          </div>
         )}
       </section>
 
       <section className="map-section">
         <p className="eyebrow">Find a café</p>
-        <h2>All cafés near you</h2>
+        <h2>Find cafés that are in the sun</h2>
         <CafeMapSection summaries={summaries} />
       </section>
     </main>

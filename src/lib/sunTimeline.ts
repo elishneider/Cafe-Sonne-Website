@@ -166,20 +166,3 @@ export function formatSegmentTime(date: Date, from: Date) {
   const time = `${hh}:${mm}`;
   return date.toDateString() !== from.toDateString() ? `tomorrow ${time}` : time;
 }
-
-// A short one-line summary of today's current segment, for compact spots (map popups)
-// that don't have room for the full graphical timeline.
-export function describeCurrentSegment(timeline: TimelineSegment[], now: Date): string | null {
-  const current = timeline[0];
-  if (!current) return null;
-
-  if (current.status === "closed") {
-    return `Closed until ${formatSegmentTime(current.end, now)}`;
-  }
-  if (current.status === "sun" || current.status === "partial") {
-    return `Sunny until ${formatSegmentTime(current.end, now)}`;
-  }
-
-  const nextSunny = timeline.find((s) => s.status === "sun" || s.status === "partial");
-  return nextSunny ? `Back in the sun ${formatSegmentTime(nextSunny.start, now)}` : null;
-}
