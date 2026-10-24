@@ -3,7 +3,7 @@ import type { DisplayStatus } from "./sunTimeline";
 export const SUN_STATUS_LABEL: Record<DisplayStatus, string> = {
   sun: "☀️ In the sun",
   partial: "⛅ Partly sunny",
-  shade: "🌥️ In shade",
+  shade: "☁️ In shade",
   closed: "🔒 Closed",
 };
 

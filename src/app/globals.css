@@ -209,19 +209,19 @@ body:has(.map-panel--expanded) .site-header .container { max-width: none; paddin
   margin-top: 24px;
 }
 
-/* Each card spans 5 shared rows (photo, title, two meta lines, timeline) so those parts
-   line up across cards in a row even when a name or address wraps to two lines. */
+/* Each card spans 3 shared rows (photo, title + details, timeline) so the timelines line up
+   across cards in a row even when a name or address wraps to two lines. */
 @supports (grid-template-rows: subgrid) {
   .card-grid .cafe-card {
     display: grid;
     grid-template-rows: subgrid;
-    grid-row: span 5;
+    grid-row: span 3;
     margin-bottom: 22px;
   }
   .card-grid .cafe-card-body {
     display: grid;
     grid-template-rows: subgrid;
-    grid-row: 2 / span 4;
+    grid-row: 2 / span 2;
     align-content: start;
   }
 }
@@ -307,14 +307,24 @@ body:has(.map-panel--expanded) .site-header .container { max-width: none; paddin
 }
 .cafe-card-meta { font-size: 0.82rem; margin: 0 0 2px; }
 .cafe-card-meta:last-of-type { margin-bottom: 0; }
+.cafe-card-address {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-color: var(--border);
+  text-underline-offset: 3px;
+  transition: color 0.15s ease, text-decoration-color 0.15s ease;
+}
+.cafe-card-address:hover { color: var(--sun-deep); text-decoration-color: var(--sun-deep); }
 
 /* Sun timeline */
 .sun-timeline-carousel {
   overflow: hidden;
   margin-top: 8px;
+  transition: height 0.3s ease;
 }
 .sun-timeline-carousel-track {
   display: flex;
+  align-items: flex-start;
   width: 200%;
   transition: transform 0.4s cubic-bezier(0.65, 0, 0.35, 1);
 }
@@ -484,6 +494,7 @@ body:has(.map-panel--expanded) .site-header .container { max-width: none; paddin
   cursor: pointer;
 }
 .map-expand:hover { border-color: var(--sun-deep); }
+.map-expand { text-decoration: none; }
 
 /* Expanded: sidebar (search, filters, café list) on the left, map filling the rest. */
 .map-panel--expanded {
@@ -507,8 +518,6 @@ body:has(.map-panel--expanded) .site-header .container { max-width: none; paddin
 }
 .map-panel--expanded .map-toolbar-top { display: flex; gap: 10px; align-items: center; }
 .map-panel--expanded .map-search { max-width: none; flex: 1; }
-.map-panel--expanded .map-filters { gap: 6px; }
-.map-panel--expanded .map-filter { padding: 8px 10px; font-size: 0.85rem; }
 .map-panel--expanded .map-expand {
   position: absolute;
   top: 28px;
@@ -659,38 +668,139 @@ body:has(.map-panel--expanded) .site-header .container { max-width: none; paddin
   box-shadow: var(--shadow);
 }
 
-.map-filters {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-.map-filters {
-  align-items: center;
-}
-.map-filters-label {
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: var(--ink-soft);
-}
-.map-filter {
+/* "Filters" dropdown: When (day + hour) and Conditions (sunny / partly sunny / shade). */
+.map-filter-menu { position: relative; }
+/* The pill holds the Filters button and, once a filter is set, a × that clears it. */
+.map-filter-bar {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 8px 14px;
   border-radius: 999px;
   border: 1px solid var(--border);
   background: var(--card-bg);
+}
+.map-filter-bar:hover,
+.map-filter-bar:has(.map-filter-trigger[aria-expanded="true"]) { border-color: var(--sun-deep); }
+.map-filter-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border: none;
+  border-radius: 999px;
+  background: none;
   color: var(--ink);
-  font-size: 0.9rem;
+  font-size: 0.95rem;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.15s ease, border-color 0.15s ease;
+  white-space: nowrap;
 }
-.map-filter:hover { border-color: var(--sun-deep); }
-.map-filter[aria-pressed="true"] {
-  background: var(--cream-deep);
+.map-filter-clear {
+  padding: 0 16px 0 2px;
+  align-self: stretch;
+  border: none;
+  background: none;
+  color: var(--ink-soft);
+  font-size: 1.25rem;
+  line-height: 1;
+  cursor: pointer;
+}
+.map-filter-clear:hover { color: var(--sun-deep); }
+.map-filter-count {
+  min-width: 20px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: var(--sun-deep);
+  color: #fff;
+  font-size: 0.75rem;
+  text-align: center;
+}
+.map-filter-when { color: var(--ink-soft); font-weight: 500; font-size: 0.85rem; }
+.map-filter-caret { font-size: 0.7rem; color: var(--ink-soft); }
+.map-filter-panel {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  z-index: 30;
+  width: 290px;
+  max-width: calc(100vw - 32px);
+  padding: 6px 0 10px;
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+.map-filter-section { padding: 12px 18px 4px; }
+.map-filter-section + .map-filter-section { border-top: 1px solid var(--border); margin-top: 8px; padding-top: 16px; }
+.map-filter-heading {
+  margin: 0 0 6px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+/* One row per option: a tick box on the left, the label on the right. */
+.map-filter-option {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 9px 0;
+  color: var(--ink);
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+.map-filter-option input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+.map-filter-mark {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border: 1.5px solid var(--border);
+  background: var(--card-bg);
+  transition: background 0.12s ease, border-color 0.12s ease;
+}
+.map-filter-mark--radio { border-radius: 50%; }
+.map-filter-mark--check { border-radius: 6px; }
+.map-filter-option:hover .map-filter-mark { border-color: var(--sun-deep); }
+.map-filter-option input:checked + .map-filter-mark {
+  background: var(--sun-deep);
   border-color: var(--sun-deep);
-  box-shadow: inset 0 0 0 1px var(--sun-deep);
+}
+.map-filter-option input:checked + .map-filter-mark--radio::after {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #fff;
+}
+.map-filter-option input:checked + .map-filter-mark--check::after {
+  content: "";
+  width: 5px;
+  height: 10px;
+  margin-top: -2px;
+  border: solid #fff;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+.map-filter-option input:focus-visible + .map-filter-mark { outline: 2px solid var(--sun); outline-offset: 2px; }
+.map-filter-select {
+  width: 100%;
+  margin: 4px 0 8px;
+  padding: 9px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--card-bg);
+  color: var(--ink);
+  font-size: 0.95rem;
 }
 
 /* Google-style "my location" button, mounted into the map's control layer. */

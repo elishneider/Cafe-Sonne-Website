@@ -1,8 +1,11 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import type { CafeSunSummary } from "@/lib/cafeSunSummary";
+import { getStatusAtTime, getTomorrowStatuses, type CafeSunSummary } from "@/lib/cafeSunSummary";
+import { MapFilterMenu } from "@/components/MapFilterMenu";
+import { NOW, getWhenDate, isWhenSet, type MapWhen } from "@/lib/mapWhen";
 import {
   SUN_STATUS_BADGE_CLASS,
   SUN_STATUS_DOT_COLOR,
@@ -52,12 +55,6 @@ function loadGoogleMaps(apiKey: string): Promise<typeof google> {
 
 const PIN_SIZE_PX = 40;
 
-// Closed cafés have no filter — they're a plain dot, shown only when no filter is active.
-const FILTERS: { status: SunStatus; label: string }[] = [
-  { status: "sun", label: "Sunny" },
-  { status: "partial", label: "Partly sunny" },
-  { status: "shade", label: "Shade" },
-];
 
 // A circular pin with the status glyph inside, drawn as an SVG data URL so it works
 // with the classic Marker (no Map ID needed).
@@ -112,37 +109,57 @@ export function CafeMapSection({
   const userMarkerRef = useRef<google.maps.Marker | null>(null);
   const [openCafeId, setOpenCafeId] = useState<string | null>(null);
   const [activeFilters, setActiveFilters] = useState<SunStatus[]>([]);
-  const [expandedState, setExpanded] = useState(false);
+  const [when, setWhen] = useState<MapWhen>(NOW);
+  // The big layout (sidebar list + large map) only exists on the /map page; on the home
+  // page the small map links there.
   const isPage = variant === "page";
-  const expanded = isPage || expandedState;
+  const expanded = isPage;
 
-  // Expanded = the whole panel (toolbar + map) covers the viewport. Lock page scroll
-  // behind it and let Escape close it.
-  useEffect(() => {
-    if (!expandedState) return;
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setExpanded(false);
-    };
-    window.addEventListener("keydown", onKeyDown);
-    return () => {
-      document.body.style.overflow = previousOverflow;
-      window.removeEventListener("keydown", onKeyDown);
-    };
-  }, [expandedState]);
+  // Every status a café has at the chosen day/time: one for "Now" or a specific hour, or
+  // all of tomorrow's open statuses when tomorrow is chosen without a time.
+  const statusesAtWhen = (summary: CafeSunSummary, at: MapWhen): DisplayStatus[] => {
+    if (at.day === "tomorrow" && at.hour === null) {
+      const statuses = getTomorrowStatuses(summary);
+      return statuses.length > 0 ? statuses : ["closed"];
+    }
+    const date = getWhenDate(at, new Date());
+    return [date ? getStatusAtTime(summary, date) : summary.status];
+  };
+  // The status to show on the pin/badge: the best one among those matching the conditions.
+  const STATUS_PREFERENCE: DisplayStatus[] = ["sun", "partial", "shade"];
+  const displayStatus = (statuses: DisplayStatus[], filters: SunStatus[]): DisplayStatus => {
+    const pool = filters.length > 0 ? statuses.filter((s) => s !== "closed" && filters.includes(s)) : statuses;
+    return STATUS_PREFERENCE.find((s) => pool.includes(s)) ?? "closed";
+  };
+  const statusFor = (summary: CafeSunSummary) =>
+    displayStatus(statusesAtWhen(summary, when), activeFilters);
+  const hoursFor = (summary: CafeSunSummary) =>
+    when.day === "tomorrow" ? summary.tomorrowHours : summary.todayHours;
 
-  // A café is shown when it matches both the typed search and the status filters.
-  const isVisible = (summary: CafeSunSummary, filters: SunStatus[], text: string) => {
+  // With no filter applied every café is listed (closed ones as plain dots). Once a day/time
+  // or condition is chosen, only cafés that are open then — and match the conditions — show.
+  const isVisible = (
+    summary: CafeSunSummary,
+    filters: SunStatus[],
+    text: string,
+    at: MapWhen = when,
+  ) => {
     const q = text.trim().toLowerCase();
     // The name must start with what's typed, so results narrow with every letter.
     const matchesText = !q || summary.cafe.name.toLowerCase().startsWith(q);
+    const filtering = filters.length > 0 || isWhenSet(at);
     const matchesFilter =
-      filters.length === 0 || (summary.status !== "closed" && filters.includes(summary.status));
+      !filtering ||
+      statusesAtWhen(summary, at).some(
+        (status) => status !== "closed" && (filters.length === 0 || filters.includes(status)),
+      );
     return matchesText && matchesFilter;
   };
   const visibleSummaries = summaries.filter((s) => isVisible(s, activeFilters, query));
-  const visibleKey = visibleSummaries.map((s) => `${s.cafe.id}:${s.status}`).join("|");
+  // One entry per café: its status at the chosen time and whether it's shown.
+  const markerKey = summaries
+    .map((s) => `${s.cafe.id}:${statusFor(s)}:${isVisible(s, activeFilters, query) ? 1 : 0}`)
+    .join("|");
 
   useEffect(() => {
     if (!apiKey) return;
@@ -211,13 +228,18 @@ export function CafeMapSection({
     });
   }, [ready, summaries]);
 
-  // Search/filters only hide and show the existing pins — rebuilding them on every
-  // keystroke made the whole map flicker.
+  // Search, filters and the chosen time only change the existing pins (icon + visibility) —
+  // rebuilding them on every keystroke made the whole map flicker.
   useEffect(() => {
     if (!ready) return;
-    const visibleIds = new Set(visibleKey.split("|").map((entry) => entry.split(":")[0]));
-    markersRef.current.forEach((marker, id) => marker.setVisible(visibleIds.has(id)));
-  }, [ready, summaries, visibleKey]);
+    markerKey.split("|").forEach((entry) => {
+      const [id, status, visible] = entry.split(":");
+      const marker = markersRef.current.get(id);
+      if (!marker) return;
+      marker.setIcon(buildPinIcon(status as DisplayStatus));
+      marker.setVisible(visible === "1");
+    });
+  }, [ready, summaries, markerKey]);
 
   function goToCafe(cafeId: string) {
     const map = mapRef.current;
@@ -259,17 +281,30 @@ export function CafeMapSection({
     });
   }
 
+  function closeOpenPopupIfHidden(filters: SunStatus[], nextWhen: MapWhen) {
+    const open = openCafeId ? summaries.find((s) => s.cafe.id === openCafeId) : undefined;
+    if (open && !isVisible(open, filters, "", nextWhen)) {
+      infoWindowRef.current?.close();
+      setOpenCafeId(null);
+    }
+  }
+
+  function changeWhen(next: MapWhen) {
+    setWhen(next);
+    closeOpenPopupIfHidden(activeFilters, next);
+  }
+
+  function resetFilters() {
+    setWhen(NOW);
+    setActiveFilters([]);
+  }
+
   function toggleFilter(status: SunStatus) {
     const next = activeFilters.includes(status)
       ? activeFilters.filter((f) => f !== status)
       : [...activeFilters, status];
     setActiveFilters(next);
-
-    const open = openCafeId ? summaries.find((s) => s.cafe.id === openCafeId) : undefined;
-    if (open && !isVisible(open, next, query)) {
-      infoWindowRef.current?.close();
-      setOpenCafeId(null);
-    }
+    closeOpenPopupIfHidden(next, when);
   }
 
   function locateMe() {
@@ -331,35 +366,21 @@ export function CafeMapSection({
               </ul>
             )}
           </div>
-          {!isPage && (
-            <button
-              type="button"
-              className="map-expand"
-              aria-pressed={expanded}
-              onClick={() => setExpanded((value) => !value)}
-            >
-              {expanded ? "Collapse map" : "Expand map"}
-            </button>
-          )}
+          <Link href={isPage ? "/" : "/map"} className="map-expand">
+            {isPage ? "Collapse map" : "Expand map"}
+          </Link>
         </div>
-        <div className="map-filters" role="group" aria-label="Open cafés, filtered by sun status">
-          <span className="map-filters-label">Open and:</span>
-          {FILTERS.map(({ status, label }) => (
-            <button
-              key={status}
-              type="button"
-              className="map-filter"
-              aria-pressed={activeFilters.includes(status)}
-              onClick={() => toggleFilter(status)}
-            >
-              <span aria-hidden="true">{SUN_STATUS_ICON[status]}</span> {label}
-            </button>
-          ))}
-        </div>
+        <MapFilterMenu
+          when={when}
+          onWhenChange={changeWhen}
+          conditions={activeFilters}
+          onToggleCondition={toggleFilter}
+          onReset={resetFilters}
+        />
       </div>
       {expanded && (
         <ul className="map-list" aria-label="Cafés">
-          {visibleSummaries.length === 0 && <li className="map-list-empty">No cafés match right now.</li>}
+          {visibleSummaries.length === 0 && <li className="map-list-empty">No open cafés match.</li>}
           {visibleSummaries.map((summary) => (
             <li key={summary.cafe.id}>
               <button
@@ -372,13 +393,13 @@ export function CafeMapSection({
                 <span className="map-list-body">
                   <span className="map-list-head">
                     <span className="map-list-name">{summary.cafe.name}</span>
-                    <span className={`badge ${SUN_STATUS_BADGE_CLASS[summary.status]}`}>
-                      {SUN_STATUS_LABEL[summary.status]}
+                    <span className={`badge ${SUN_STATUS_BADGE_CLASS[statusFor(summary)]}`}>
+                      {SUN_STATUS_LABEL[statusFor(summary)]}
                     </span>
                   </span>
                   <span className="cafe-card-meta">{SEATING_TYPE_LABEL[summary.cafe.seatingType]}</span>
                   <span className="cafe-card-meta">
-                    {summary.cafe.addressLine} · {formatHours(summary.todayHours)}
+                    {summary.cafe.addressLine} · {formatHours(hoursFor(summary))}
                   </span>
                 </span>
               </button>

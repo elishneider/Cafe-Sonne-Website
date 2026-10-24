@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { CafeSunSummary } from "@/lib/cafeSunSummary";
 import { SUN_STATUS_BADGE_CLASS, SUN_STATUS_LABEL } from "@/lib/sunStatusPresentation";
 import { formatHours } from "@/lib/cafeHours";
+import { getGoogleMapsUrl } from "@/lib/mapsLink";
 import { SEATING_TYPE_LABEL } from "@/lib/seatingTypePresentation";
 import { SunTimeline } from "@/components/SunTimeline";
 
@@ -13,6 +14,19 @@ export function CafeCard({ summary }: { summary: CafeSunSummary }) {
   const [activePhoto, setActivePhoto] = useState(0);
   const [photoFailed, setPhotoFailed] = useState(false);
   const [showTomorrow, setShowTomorrow] = useState(false);
+  const todayPaneRef = useRef<HTMLDivElement>(null);
+  const tomorrowPaneRef = useRef<HTMLDivElement>(null);
+  // The carousel is only as tall as the pane being shown, so a busy Tomorrow bar (many
+  // stacked time labels) doesn't leave empty space under a simpler Today bar.
+  const [carouselHeight, setCarouselHeight] = useState<number | undefined>(undefined);
+
+  useEffect(() => {
+    const pane = (showTomorrow ? tomorrowPaneRef : todayPaneRef).current;
+    if (!pane) return;
+    const observer = new ResizeObserver(() => setCarouselHeight(pane.offsetHeight));
+    observer.observe(pane);
+    return () => observer.disconnect();
+  }, [showTomorrow]);
 
   useEffect(() => {
     let cancelled = false;
@@ -83,21 +97,32 @@ export function CafeCard({ summary }: { summary: CafeSunSummary }) {
         )}
       </div>
       <div className="cafe-card-body">
-        <div className="cafe-card-head">
-          <h3>{cafe.name}</h3>
-          <span className={`badge ${SUN_STATUS_BADGE_CLASS[status]}`}>{SUN_STATUS_LABEL[status]}</span>
+        <div className="cafe-card-info">
+          <div className="cafe-card-head">
+            <h3>{cafe.name}</h3>
+            <span className={`badge ${SUN_STATUS_BADGE_CLASS[status]}`}>{SUN_STATUS_LABEL[status]}</span>
+          </div>
+          <p className="cafe-card-meta">{SEATING_TYPE_LABEL[cafe.seatingType]}</p>
+          <p className="cafe-card-meta">
+            <a
+              href={getGoogleMapsUrl(cafe)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="cafe-card-address"
+              title="Open in Google Maps"
+            >
+              {cafe.addressLine}
+            </a>{" "}
+            · {formatHours(todayHours)}
+          </p>
         </div>
-        <p className="cafe-card-meta">{SEATING_TYPE_LABEL[cafe.seatingType]}</p>
-        <p className="cafe-card-meta">
-          {cafe.addressLine} · {formatHours(todayHours)}
-        </p>
 
-        <div className="sun-timeline-carousel">
+        <div className="sun-timeline-carousel" style={{ height: carouselHeight }}>
           <div
             className="sun-timeline-carousel-track"
             style={{ transform: showTomorrow ? "translateX(-50%)" : "translateX(0%)" }}
           >
-            <div className="sun-timeline-pane" aria-hidden={showTomorrow}>
+            <div ref={todayPaneRef} className="sun-timeline-pane" aria-hidden={showTomorrow}>
               <p className="sun-timeline-day-label">Today</p>
               <div className="sun-timeline-row">
                 <SunTimeline segments={todayTimeline} />
@@ -113,7 +138,7 @@ export function CafeCard({ summary }: { summary: CafeSunSummary }) {
                 </button>
               </div>
             </div>
-            <div className="sun-timeline-pane" aria-hidden={!showTomorrow}>
+            <div ref={tomorrowPaneRef} className="sun-timeline-pane" aria-hidden={!showTomorrow}>
               <p className="sun-timeline-day-label">Tomorrow</p>
               <div className="sun-timeline-row">
                 <button

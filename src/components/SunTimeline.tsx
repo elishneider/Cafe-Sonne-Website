@@ -103,7 +103,9 @@ export function SunTimeline({
       pct: (cumulative[i] / totalWeight) * 100,
       text: formatSegmentTime(segment.end, from),
     })),
-    ...(endLabel === null
+    // The default end label is a time; skip it when the bar finishes on "Closed", since the
+    // bar then obviously runs to the end of the day.
+    ...(endLabel === null || (endLabel === undefined && segments[segments.length - 1].status === "closed")
       ? []
       : [
           {

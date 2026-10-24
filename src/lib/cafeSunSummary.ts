@@ -31,3 +31,21 @@ export function getCafeSunSummary(cafe: Cafe, forecast: HourlyWeather[], now: Da
     tomorrowHours: getHoursForDate(cafe, tomorrow),
   };
 }
+
+// What a café's seating is doing at a specific moment today or tomorrow, read from the
+// timelines already calculated. Anything outside those timelines (e.g. before opening
+// tomorrow) counts as closed.
+export function getStatusAtTime(summary: CafeSunSummary, at: Date): DisplayStatus {
+  const todayStart = summary.todayTimeline[0]?.start;
+  const timeline =
+    todayStart && at.toDateString() === todayStart.toDateString()
+      ? summary.todayTimeline
+      : summary.tomorrowTimeline;
+  const segment = timeline.find((s) => at >= s.start && at < s.end);
+  return segment?.status ?? "closed";
+}
+
+// Every status the café goes through while open tomorrow (for "Tomorrow, any time").
+export function getTomorrowStatuses(summary: CafeSunSummary): DisplayStatus[] {
+  return [...new Set(summary.tomorrowTimeline.map((s) => s.status))].filter((s) => s !== "closed");
+}
