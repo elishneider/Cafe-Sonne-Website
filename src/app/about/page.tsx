@@ -23,11 +23,8 @@ export default function About() {
         </p>
         <ul>
           <li>
-            <strong>Pavement seating</strong> &mdash; tables on the public pavement right outside.
-          </li>
-          <li>
-            <strong>Forecourt seating</strong> &mdash; tables on the café&apos;s own space, set back from the
-            pavement.
+            <strong>Pavement seating</strong> &mdash; tables right outside the front, on the pavement or on the
+            café&apos;s own space in front of the shop.
           </li>
           <li>
             <strong>Terrace</strong> &mdash; a raised or clearly defined outdoor area.

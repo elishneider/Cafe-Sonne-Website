@@ -10,12 +10,12 @@ export type Exposure =
   | { type: "enclosed"; minSunAltitudeDeg: number };
 
 // Standardised outdoor-seating categories, shown to users instead of free-text notes.
-// - pavement: tables on the public footway right outside the café (needs a pavement licence).
-// - forecourt: tables on the café's own private paved area, set back from the pavement line.
+// - pavement: tables right outside the front — on the public footway or on the café's own
+//   paved space just in front of the shop (we don't tell these two apart).
 // - terrace: a raised or clearly defined platform/decking area.
 // - courtyard: enclosed on most/all sides by surrounding buildings.
 // - garden: an informal, planted outdoor area.
-export type SeatingType = "pavement" | "forecourt" | "terrace" | "courtyard" | "garden";
+export type SeatingType = "pavement" | "terrace" | "courtyard" | "garden";
 
 export type Cafe = {
   id: string;
@@ -61,7 +61,7 @@ const CAFES: Cafe[] = [
     latitude: 51.5256672,
     longitude: -0.1795886,
     outdoorSeating: true,
-    seatingType: "forecourt",
+    seatingType: "pavement",
     addressLine: "20 Clifton Rd",
     photoPriority: [0, 7],
     opens: "06:30",

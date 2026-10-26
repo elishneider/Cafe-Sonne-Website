@@ -18,8 +18,7 @@ const OUTDOOR = /\b(outside|outdoor|outdoors|terrace|patio|pavement|sidewalk|gar
 const PROMPT = `You are checking photos of a café in London to find out whether it has OUTDOOR SEATING for customers, using photos taken by the public. Photos are numbered in the order given (starting at 0).
 
 Seating types (choose the one that best fits the main outdoor seating):
-- pavement: tables and chairs on the public pavement directly outside the café, along its frontage.
-- forecourt: tables on the café's own private paved area set back from the pavement (e.g. in front of a building, on a corner plot).
+- pavement: tables and chairs right outside the front of the café — on the public pavement or on the café's own paved space just in front of the shop (do not try to tell these apart).
 - terrace: a raised or clearly defined platform / decked or railed area, often larger.
 - courtyard: a space enclosed on most sides by surrounding buildings (often behind or beside the café).
 - garden: an informal planted or grassy outdoor area.
@@ -34,7 +33,7 @@ const SCHEMA = {
   type: "OBJECT",
   properties: {
     outdoorSeating: { type: "STRING", enum: ["yes", "no", "unclear"] },
-    seatingType: { type: "STRING", enum: ["pavement", "forecourt", "terrace", "courtyard", "garden", "none", "unclear"] },
+    seatingType: { type: "STRING", enum: ["pavement", "terrace", "courtyard", "garden", "none", "unclear"] },
     position: { type: "STRING", enum: ["front of shop", "side of shop", "rear of shop", "corner", "away from shop", "unclear"] },
     confidence: { type: "NUMBER" },
     evidencePhotos: { type: "ARRAY", items: { type: "INTEGER" } },

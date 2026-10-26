@@ -8,7 +8,7 @@ const headingFont = Jost({ subsets: ["latin"], variable: "--font-heading", weigh
 const subheadingFont = Lexend({ subsets: ["latin"], variable: "--font-subheading", weight: ["400", "500"] });
 const logoLightFont = Josefin_Sans({ subsets: ["latin"], variable: "--font-logo-light", weight: ["300"] });
 const bodyFont = Outfit({ subsets: ["latin"], variable: "--font-body" });
-const logoFont = Syne({ subsets: ["latin"], variable: "--font-logo", weight: ["700", "800"] });
+const logoFont = Syne({ subsets: ["latin"], variable: "--font-logo" });
 
 export const metadata: Metadata = {
   title: "Sonnen Café London — Find sunny outdoor seating in London",
