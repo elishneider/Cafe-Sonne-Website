@@ -7,9 +7,11 @@ const cands = JSON.parse(fs.readFileSync(new URL("./data/marylebone-soho-candida
   .filter((p) => ["cafe", "coffee_shop"].includes(p.primaryType) && p.outdoorSeating !== false);
 console.log(`${cands.length} cafés to read`);
 let done = 0, failed = 0;
+const withTimeout = (promise, ms) =>
+  Promise.race([promise, new Promise((_, reject) => setTimeout(() => reject(new Error("café timed out")), ms))]);
 for (const p of cands) {
   try {
-    const r = await classify(p.id);
+    const r = await withTimeout(classify(p.id), 300_000);
     done++;
     console.log(`[${done + failed}/${cands.length}] ${r.name}: ${r.outdoorSeating}/${r.seatingType}/${r.position} (${r.confidence}) google=${r.googleFlag}`);
   } catch (e) {

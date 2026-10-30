@@ -45,9 +45,18 @@ const SCHEMA = {
 async function getPhoto(name, idx, placeId) {
   const file = new URL(`./.cache/photos/${placeId}-${idx}.jpg`, import.meta.url);
   if (fs.existsSync(file)) return fs.readFileSync(file);
-  const res = await fetch(`https://places.googleapis.com/v1/${name}/media?maxWidthPx=800&key=${PLACES_KEY}`);
-  if (!res.ok) throw new Error(`photo ${res.status}`);
-  const buf = Buffer.from(await res.arrayBuffer());
+  let buf;
+  for (let attempt = 1; attempt <= 4; attempt++) {
+    try {
+      const res = await fetch(`https://places.googleapis.com/v1/${name}/media?maxWidthPx=800&key=${PLACES_KEY}`, { signal: AbortSignal.timeout(30_000) });
+      if (!res.ok) throw new Error(`photo ${res.status}`);
+      buf = Buffer.from(await res.arrayBuffer());
+      break;
+    } catch (e) {
+      if (attempt === 4) throw e;
+      await new Promise((r) => setTimeout(r, 3000 * attempt));
+    }
+  }
   fs.writeFileSync(file, buf);
   return buf;
 }
@@ -76,6 +85,7 @@ export async function classify(placeId) {
       });
     } catch (e) {
       console.log(`  (attempt ${attempt} failed: ${e.name}) retrying…`);
+      await new Promise((r) => setTimeout(r, 5000 * attempt));
       continue;
     }
     if (res.status === 429 || res.status >= 500) { await new Promise((r) => setTimeout(r, 8000 * attempt)); continue; }

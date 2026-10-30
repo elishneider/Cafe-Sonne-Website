@@ -13,9 +13,18 @@ const OUTDOOR = /\b(outside|outdoor|outdoors|terrace|patio|pavement|sidewalk|gar
 export async function getDetails(id) {
   const file = new URL(`./.cache/details/${id}.json`, import.meta.url);
   if (fs.existsSync(file)) return JSON.parse(fs.readFileSync(file, "utf8"));
-  const res = await fetch(`https://places.googleapis.com/v1/places/${id}`, { headers: { "X-Goog-Api-Key": KEY, "X-Goog-FieldMask": FIELDS } });
-  if (!res.ok) throw new Error(`details ${id}: ${res.status} ${(await res.text()).slice(0, 200)}`);
-  const data = await res.json();
+  let data;
+  for (let attempt = 1; attempt <= 4; attempt++) {
+    try {
+      const res = await fetch(`https://places.googleapis.com/v1/places/${id}`, { headers: { "X-Goog-Api-Key": KEY, "X-Goog-FieldMask": FIELDS }, signal: AbortSignal.timeout(30_000) });
+      if (!res.ok) throw new Error(`details ${id}: ${res.status} ${(await res.text()).slice(0, 200)}`);
+      data = await res.json();
+      break;
+    } catch (e) {
+      if (attempt === 4) throw e;
+      await new Promise((r) => setTimeout(r, 3000 * attempt));
+    }
+  }
   fs.writeFileSync(file, JSON.stringify(data));
   return data;
 }
