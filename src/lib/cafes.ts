@@ -1,5 +1,6 @@
 import type { WeeklyHours } from "./cafeHours";
 import { getPlaceWeeklyHours } from "./googlePlaces";
+import zone1Cafes from "../data/zone1-cafes.json";
 
 export type Exposure =
   // A single street-facing frontage: open sky across the street up to obstructionDeg,
@@ -7,7 +8,11 @@ export type Exposure =
   | { type: "directional"; facingDeg: number; obstructionDeg: number }
   // Surrounded by buildings on all sides (courtyard/backland) — direction doesn't
   // matter, only whether the sun is high enough to clear the surrounding roofline.
-  | { type: "enclosed"; minSunAltitudeDeg: number };
+  | { type: "enclosed"; minSunAltitudeDeg: number }
+  // Worked out from LIDAR: for each seat point we sample around the tables, the skyline angle
+  // (degrees above the horizon) at every 5° compass bearing starting from north. The sun
+  // reaches a seat point when it is higher than the skyline in its direction.
+  | { type: "skyline"; skylines: number[][] };
 
 // Standardised outdoor-seating categories, shown to users instead of free-text notes.
 // - pavement: tables right outside the front — on the public footway or on the café's own
@@ -85,6 +90,44 @@ const CAFES: Cafe[] = [
   },
 ];
 
+// Cafés found and measured automatically (see scripts/compute-skylines.mjs), as opposed to
+// the three hand-researched ones above. Data is built by scripts/build-cafe-data.mjs.
+type Zone1CafeRecord = {
+  id: string;
+  name: string;
+  placeId: string;
+  latitude: number;
+  longitude: number;
+  seatingType: SeatingType;
+  addressLine: string;
+  photoPriority: number[];
+  weeklyHours: WeeklyHours | null;
+  skyline: number[][];
+};
+
+const FALLBACK_HOURS = { opens: "08:00", closes: "17:00" };
+
+const MEASURED_CAFES: Cafe[] = (zone1Cafes as Zone1CafeRecord[]).map((c) => {
+  const typical = c.weeklyHours?.find((day) => day) ?? FALLBACK_HOURS;
+  return {
+    id: c.id,
+    name: c.name,
+    latitude: c.latitude,
+    longitude: c.longitude,
+    outdoorSeating: true,
+    seatingType: c.seatingType,
+    addressLine: c.addressLine,
+    photoPriority: c.photoPriority,
+    opens: typical.opens,
+    closes: typical.closes,
+    ...(c.weeklyHours ? { weeklyHours: c.weeklyHours } : {}),
+    exposure: { type: "skyline", skylines: c.skyline },
+    placeId: c.placeId,
+  };
+});
+
+const ALL_CAFES: Cafe[] = [...CAFES, ...MEASURED_CAFES];
+
 const HOURS_TTL_MS = 24 * 60 * 60 * 1000;
 const HOURS_FAILURE_TTL_MS = 10 * 60 * 1000;
 const hoursCache = new Map<string, { hours: WeeklyHours | null; expiresAt: number }>();
@@ -101,11 +144,21 @@ async function getLiveHours(cafe: Cafe): Promise<WeeklyHours | null> {
   return hours;
 }
 
+// Live hours for ~100 cafés: a few requests at a time rather than all at once.
+const HOURS_CONCURRENCY = 8;
+
 export async function getCafes(): Promise<Cafe[]> {
-  return Promise.all(
-    CAFES.map(async (cafe) => {
-      const weeklyHours = await getLiveHours(cafe);
-      return weeklyHours ? { ...cafe, weeklyHours } : cafe;
+  const result: Cafe[] = new Array(ALL_CAFES.length);
+  let next = 0;
+  await Promise.all(
+    Array.from({ length: HOURS_CONCURRENCY }, async () => {
+      while (next < ALL_CAFES.length) {
+        const i = next++;
+        const cafe = ALL_CAFES[i];
+        const weeklyHours = await getLiveHours(cafe);
+        result[i] = weeklyHours ? { ...cafe, weeklyHours } : cafe;
+      }
     }),
   );
+  return result;
 }

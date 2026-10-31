@@ -6,7 +6,7 @@ import type { HourlyWeather } from "@/lib/googleWeather";
 import { getCafeSunSummary, type CafeSunSummary } from "@/lib/cafeSunSummary";
 import type { DisplayStatus } from "@/lib/sunTimeline";
 
-const STATUS_ORDER: Record<DisplayStatus, number> = { sun: 0, partial: 1, shade: 2, closed: 3 };
+export const STATUS_ORDER: Record<DisplayStatus, number> = { sun: 0, partial: 1, shade: 2, closed: 3 };
 
 const DEFAULT_COORDS = { latitude: 51.5265, longitude: -0.0789 };
 
@@ -69,5 +69,5 @@ export function useCafeSummaries() {
           .sort((a, b) => STATUS_ORDER[a.status] - STATUS_ORDER[b.status])
       : [];
 
-  return { summaries, loaded: Boolean(forecast && cafes), error };
+  return { summaries, loaded: Boolean(forecast && cafes), error, coords };
 }

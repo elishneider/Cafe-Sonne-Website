@@ -14,6 +14,17 @@ function angleDiff(a: number, b: number) {
 export function getGeometrySunStatus(cafe: Cafe, sun: SunPosition): SunStatus {
   const { exposure } = cafe;
 
+  if (exposure.type === "skyline") {
+    // What share of the seat points can see the sun over the skyline right now.
+    const bearing = ((sun.azimuthDeg % 360) + 360) % 360;
+    const step = 360 / exposure.skylines[0].length;
+    const i = Math.round(bearing / step) % exposure.skylines[0].length;
+    const sunnyShare = exposure.skylines.filter((s) => sun.altitudeDeg > s[i]).length / exposure.skylines.length;
+    if (sunnyShare >= 0.67) return "sun";
+    if (sunnyShare >= 0.25) return "partial";
+    return "shade";
+  }
+
   if (exposure.type === "enclosed") {
     if (sun.altitudeDeg >= exposure.minSunAltitudeDeg) return "sun";
     if (sun.altitudeDeg >= exposure.minSunAltitudeDeg - 10) return "partial";

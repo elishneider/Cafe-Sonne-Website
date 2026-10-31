@@ -78,6 +78,24 @@ export default function About() {
           see. We&apos;re starting with a small group of cafés and checking each one carefully before we add
           more.
         </p>
+
+        <h3>Where the data comes from</h3>
+        <p>
+          Café details, photos and opening hours come from Google. Building outlines are &copy;{" "}
+          <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">
+            OpenStreetMap contributors
+          </a>
+          . Heights of buildings and trees come from Environment Agency LIDAR surveys, contains public sector
+          information licensed under the{" "}
+          <a
+            href="https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Open Government Licence v3.0
+          </a>
+          .
+        </p>
       </main>
       <SiteFooter />
     </>
