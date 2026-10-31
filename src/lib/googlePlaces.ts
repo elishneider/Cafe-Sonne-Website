@@ -23,7 +23,7 @@ export async function getPlacePhotoNames(placeId: string, maxCount = 10): Promis
   return names.slice(0, maxCount);
 }
 
-export async function getPlacePhotoMedia(photoName: string, maxWidthPx = 800): Promise<PlacePhoto | null> {
+export async function getPlacePhotoMedia(photoName: string, maxWidthPx = 1200): Promise<PlacePhoto | null> {
   if (!API_KEY) return null;
 
   const res = await fetch(
