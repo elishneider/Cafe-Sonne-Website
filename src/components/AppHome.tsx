@@ -5,7 +5,7 @@ import { HeroSuns } from "@/components/HeroSuns";
 import { CafeMapSection } from "@/components/CafeMapSection";
 import { useCafeSummaries, STATUS_ORDER } from "@/components/useCafeSummaries";
 
-const NEARBY_COUNT = 6;
+const NEARBY_COUNT = 8;
 
 // Straight-line distance in metres — plenty accurate for ranking cafés by "nearest".
 function distanceMetres(a: { latitude: number; longitude: number }, b: { latitude: number; longitude: number }) {
