@@ -15,6 +15,7 @@ import {
 } from "@/lib/sunStatusPresentation";
 import { SEATING_TYPE_LABEL } from "@/lib/seatingTypePresentation";
 import { formatHours } from "@/lib/cafeHours";
+import { distanceMetres } from "@/lib/distance";
 import type { SunStatus } from "@/lib/sunStatus";
 import type { DisplayStatus } from "@/lib/sunTimeline";
 import { CafeCard } from "@/components/CafeCard";
@@ -84,9 +85,12 @@ function buildPinIcon(status: DisplayStatus): google.maps.Icon | google.maps.Sym
 
 export function CafeMapSection({
   summaries,
+  userLocation = null,
   variant = "inline",
 }: {
   summaries: CafeSunSummary[];
+  // Where the visitor is, if we know. The café list is ordered nearest-first from here.
+  userLocation?: { latitude: number; longitude: number } | null;
   // "page" = the dedicated /map page: always the full sidebar + map layout, under the
   // site header, with no expand/collapse button.
   variant?: "inline" | "page";
@@ -99,6 +103,7 @@ export function CafeMapSection({
   const [ready, setReady] = useState(false);
   const [loadError, setLoadError] = useState(false);
   const [query, setQuery] = useState("");
+  const [pressedLocation, setPressedLocation] = useState<{ latitude: number; longitude: number } | null>(null);
   const [suggestionsOpen, setSuggestionsOpen] = useState(false);
   // The InfoWindow's content is a plain div that React fills with the real CafeCard via a
   // portal, so the map popup is identical to the cards above (photos, timeline, toggle).
@@ -155,7 +160,11 @@ export function CafeMapSection({
       );
     return matchesText && matchesFilter;
   };
-  const visibleSummaries = summaries.filter((s) => isVisible(s, activeFilters, query));
+  // Pressing the "show my location" button counts too, for visitors whose browser hadn't shared it yet.
+  const origin = pressedLocation ?? userLocation;
+  const visibleSummaries = summaries
+    .filter((s) => isVisible(s, activeFilters, query))
+    .sort((a, b) => (origin ? distanceMetres(origin, a.cafe) - distanceMetres(origin, b.cafe) : 0));
   // One entry per café: its status at the chosen time and whether it's shown.
   const markerKey = summaries
     .map((s) => `${s.cafe.id}:${statusFor(s)}:${isVisible(s, activeFilters, query) ? 1 : 0}`)
@@ -313,6 +322,7 @@ export function CafeMapSection({
       const map = mapRef.current;
       if (!map) return;
       const here = { lat: position.coords.latitude, lng: position.coords.longitude };
+      setPressedLocation({ latitude: here.lat, longitude: here.lng });
       map.panTo(here);
       map.setZoom(15);
 

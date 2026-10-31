@@ -4,18 +4,12 @@ import { CafeCard } from "@/components/CafeCard";
 import { HeroSuns } from "@/components/HeroSuns";
 import { CafeMapSection } from "@/components/CafeMapSection";
 import { useCafeSummaries, STATUS_ORDER } from "@/components/useCafeSummaries";
+import { distanceMetres } from "@/lib/distance";
 
 const NEARBY_COUNT = 8;
 
-// Straight-line distance in metres — plenty accurate for ranking cafés by "nearest".
-function distanceMetres(a: { latitude: number; longitude: number }, b: { latitude: number; longitude: number }) {
-  const dLat = (a.latitude - b.latitude) * 111_320;
-  const dLon = (a.longitude - b.longitude) * 111_320 * Math.cos((a.latitude * Math.PI) / 180);
-  return Math.hypot(dLat, dLon);
-}
-
 export function AppHome() {
-  const { summaries, loaded, error, coords } = useCafeSummaries();
+  const { summaries, loaded, error, coords, userLocation } = useCafeSummaries();
 
   // The cards below the hero are just the cafés closest to you (sunniest first among them);
   // the map shows all of them.
@@ -59,7 +53,7 @@ export function AppHome() {
       <section className="map-section">
         <p className="eyebrow">Find a café</p>
         <h2>Find cafés that are in the sun</h2>
-        <CafeMapSection summaries={summaries} />
+        <CafeMapSection summaries={summaries} userLocation={userLocation} />
       </section>
     </main>
   );

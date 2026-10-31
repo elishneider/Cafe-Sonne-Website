@@ -12,6 +12,8 @@ const DEFAULT_COORDS = { latitude: 51.5265, longitude: -0.0789 };
 
 function useCoords() {
   const [coords, setCoords] = useState(DEFAULT_COORDS);
+  // False until the browser actually tells us where the visitor is (they may decline).
+  const [located, setLocated] = useState(false);
 
   useEffect(() => {
     if (!navigator.geolocation) return;
@@ -22,19 +24,20 @@ function useCoords() {
           latitude: position.coords.latitude,
           longitude: position.coords.longitude,
         });
+        setLocated(true);
       },
       () => {},
       { timeout: 5000 },
     );
   }, []);
 
-  return coords;
+  return { coords, located };
 }
 
 // Fetches the forecast and café list, and turns them into per-café sun summaries
 // (sunniest first). Shared by every page that shows cafés.
 export function useCafeSummaries() {
-  const coords = useCoords();
+  const { coords, located } = useCoords();
   const [forecast, setForecast] = useState<HourlyWeather[] | null>(null);
   const [cafes, setCafes] = useState<Cafe[] | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -69,5 +72,5 @@ export function useCafeSummaries() {
           .sort((a, b) => STATUS_ORDER[a.status] - STATUS_ORDER[b.status])
       : [];
 
-  return { summaries, loaded: Boolean(forecast && cafes), error, coords };
+  return { summaries, loaded: Boolean(forecast && cafes), error, coords, userLocation: located ? coords : null };
 }
