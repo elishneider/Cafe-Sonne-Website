@@ -1,6 +1,6 @@
 import type { WeeklyHours } from "./cafeHours";
-import { getPlaceWeeklyHours } from "./googlePlaces";
 import zone1Cafes from "../data/zone1-cafes.json";
+import cafeHours from "../data/cafe-hours.json";
 
 export type Exposure =
   // A single street-facing frontage: open sky across the street up to obstructionDeg,
@@ -101,14 +101,18 @@ type Zone1CafeRecord = {
   seatingType: SeatingType;
   addressLine: string;
   photoPriority: number[];
-  weeklyHours: WeeklyHours | null;
   skyline: number[][];
 };
 
 const FALLBACK_HOURS = { opens: "08:00", closes: "17:00" };
 
+// Opening hours come from src/data/cafe-hours.json, refreshed from Google Places by
+// `npm run refresh:hours` — the app makes no Google calls for hours while it runs.
+const savedHours = cafeHours.hours as Record<string, WeeklyHours | null>;
+const getSavedHours = (placeId: string) => savedHours[placeId] ?? null;
+
 const MEASURED_CAFES: Cafe[] = (zone1Cafes as Zone1CafeRecord[]).map((c) => {
-  const typical = c.weeklyHours?.find((day) => day) ?? FALLBACK_HOURS;
+  const typical = getSavedHours(c.placeId)?.find((day) => day) ?? FALLBACK_HOURS;
   return {
     id: c.id,
     name: c.name,
@@ -120,45 +124,16 @@ const MEASURED_CAFES: Cafe[] = (zone1Cafes as Zone1CafeRecord[]).map((c) => {
     photoPriority: c.photoPriority,
     opens: typical.opens,
     closes: typical.closes,
-    ...(c.weeklyHours ? { weeklyHours: c.weeklyHours } : {}),
     exposure: { type: "skyline", skylines: c.skyline },
     placeId: c.placeId,
   };
 });
 
-const ALL_CAFES: Cafe[] = [...CAFES, ...MEASURED_CAFES];
-
-const HOURS_TTL_MS = 24 * 60 * 60 * 1000;
-const HOURS_FAILURE_TTL_MS = 10 * 60 * 1000;
-const hoursCache = new Map<string, { hours: WeeklyHours | null; expiresAt: number }>();
-
-async function getLiveHours(cafe: Cafe): Promise<WeeklyHours | null> {
-  const cached = hoursCache.get(cafe.id);
-  if (cached && cached.expiresAt > Date.now()) return cached.hours;
-
-  const hours = await getPlaceWeeklyHours(cafe.placeId).catch(() => null);
-  hoursCache.set(cafe.id, {
-    hours,
-    expiresAt: Date.now() + (hours ? HOURS_TTL_MS : HOURS_FAILURE_TTL_MS),
-  });
-  return hours;
-}
-
-// Live hours for ~100 cafés: a few requests at a time rather than all at once.
-const HOURS_CONCURRENCY = 8;
+const ALL_CAFES: Cafe[] = [...CAFES, ...MEASURED_CAFES].map((cafe) => {
+  const weeklyHours = getSavedHours(cafe.placeId);
+  return weeklyHours ? { ...cafe, weeklyHours } : cafe;
+});
 
 export async function getCafes(): Promise<Cafe[]> {
-  const result: Cafe[] = new Array(ALL_CAFES.length);
-  let next = 0;
-  await Promise.all(
-    Array.from({ length: HOURS_CONCURRENCY }, async () => {
-      while (next < ALL_CAFES.length) {
-        const i = next++;
-        const cafe = ALL_CAFES[i];
-        const weeklyHours = await getLiveHours(cafe);
-        result[i] = weeklyHours ? { ...cafe, weeklyHours } : cafe;
-      }
-    }),
-  );
-  return result;
+  return ALL_CAFES;
 }
